@@ -166,6 +166,7 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
                 onOrder={changeOrder}
                 onViewMode={changeViewMode}
                 onToggle={list.toggle}
+                onToggleDate={list.toggleDate}
                 onEdit={startEdit}
                 onDelete={handleDelete}
               />

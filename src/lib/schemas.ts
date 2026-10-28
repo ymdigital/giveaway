@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidCode, normalizeCode } from "./code";
 import { HTTP_URL_PATTERN, LIMITS } from "./limits";
+import { normalizePickupDates } from "./pickup";
 import { ACCENTS, COLOR_MODES } from "./types";
 
 export const codeSchema = z
@@ -23,6 +24,11 @@ const imageField = z
   .transform((v) => (/^https:\/\/\S+$/i.test(v) ? v : ""))
   .optional();
 
+export const pickupDatesSchema = z
+  .array(z.object({ date: z.iso.date(), collected: z.boolean() }))
+  .max(LIMITS.pickupDates)
+  .transform(normalizePickupDates);
+
 export const createListSchema = z.object({
   code: codeSchema,
   accent: accentSchema.optional(),
@@ -39,6 +45,7 @@ export const createItemSchema = z.object({
   url: urlField,
   title: optionalText(LIMITS.title),
   pickup: optionalText(LIMITS.pickup),
+  pickupDates: pickupDatesSchema.optional(),
   note: optionalText(LIMITS.note),
   image: imageField,
   author: optionalText(LIMITS.author),

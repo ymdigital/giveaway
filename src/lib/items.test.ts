@@ -3,7 +3,7 @@ import { countItems, isSortOrder, isViewMode, shortLink, sortItems, titleFromTex
 import type { Item } from "./types";
 
 const item = (over: Partial<Item>): Item => ({
-  id: "id", url: "https://x.com/u/status/1", title: "", pickup: "", note: "", image: "",
+  id: "id", url: "https://x.com/u/status/1", title: "", pickup: "", pickupDates: [], note: "", image: "",
   author: "", collected: false, createdAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z",
   ...over,
 });
@@ -33,6 +33,14 @@ describe("sortItems", () => {
     ];
     expect(sortItems(named, "title").map((i) => i.id)).toEqual(["ko", "kho-newer", "kho", "author"]);
   });
+  test("pickup puts the nearest uncollected pickup date first, undated last", () => {
+    const dated = [
+      item({ id: "none" }),
+      item({ id: "late", pickupDates: [{ date: "2026-11-20", collected: false }] }),
+      item({ id: "early-done", pickupDates: [{ date: "2026-11-01", collected: true }, { date: "2026-11-18", collected: false }] }),
+    ];
+    expect(sortItems(dated, "pickup").map((i) => i.id)).toEqual(["early-done", "late", "none"]);
+  });
   test("does not mutate input", () => {
     const copy = [...items];
     sortItems(items);
@@ -44,6 +52,10 @@ describe("visibleItems", () => {
   test("filters by tab", () => {
     expect(visibleItems(items, "done", "").map((i) => i.id)).toEqual(["new-done"]);
     expect(visibleItems(items, "todo", "")).toHaveLength(2);
+  });
+  test("searches formatted pickup dates", () => {
+    const dated = [item({ id: "d", pickupDates: [{ date: "2026-11-15", collected: false }] }), item({ id: "n" })];
+    expect(visibleItems(dated, "all", "พ.ย.").map((i) => i.id)).toEqual(["d"]);
   });
   test("applies the requested order", () => {
     expect(visibleItems(items, "todo", "", "oldest").map((i) => i.id)).toEqual(["old-todo", "new-todo"]);

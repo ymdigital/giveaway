@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError, errorMessage, type ItemDraft, type ListPrefs } from "@/lib/client-api";
 import { isValidCode, normalizeCode } from "@/lib/code";
 import { MSG } from "@/lib/messages";
+import { toggleItemPatch, togglePickupDatePatch, type CollectPatch } from "@/lib/pickup";
 import { STORAGE_KEYS, loadValue, storeValue } from "@/lib/storage";
 import { nextColorMode } from "@/lib/theme";
 import type { Accent, Item, ListData } from "@/lib/types";
@@ -126,21 +127,31 @@ export function useGiveawayList(initialCode: string | undefined, toast: ShowToas
     setItems((prev) => prev.map((i) => (i.id === next.id ? next : i)));
   }, []);
 
-  const toggle = useCallback(
-    async (item: Item) => {
-      const optimistic = { ...item, collected: !item.collected };
-      replaceItem(optimistic);
+  const applyCollect = useCallback(
+    async (item: Item, patch: CollectPatch, partialMsg?: string) => {
+      replaceItem({ ...item, ...patch });
       try {
-        const saved = await api.updateItem(code, item.id, { collected: optimistic.collected });
+        const saved = await api.updateItem(code, item.id, patch);
         replaceItem(saved);
         if (saved.collected) toast("เก็บแล้ว เย้ 💗", { icon: "check" });
-        else toast("ย้ายกลับไปยังไม่ได้เก็บ");
+        else toast(partialMsg ?? "ย้ายกลับไปยังไม่ได้เก็บ");
       } catch (err) {
         replaceItem(item);
         toast(errorMessage(err));
       }
     },
     [code, replaceItem, toast],
+  );
+
+  const toggle = useCallback((item: Item) => applyCollect(item, toggleItemPatch(item)), [applyCollect]);
+
+  const toggleDate = useCallback(
+    (item: Item, date: string) => {
+      const patch = togglePickupDatePatch(item, date);
+      const doneCount = patch.pickupDates.filter((d) => d.collected).length;
+      return applyCollect(item, patch, `รับแล้ว ${doneCount}/${patch.pickupDates.length} วัน`);
+    },
+    [applyCollect],
   );
 
   const restore = useCallback(
@@ -235,6 +246,7 @@ export function useGiveawayList(initialCode: string | undefined, toast: ShowToas
     leave,
     refresh,
     toggle,
+    toggleDate,
     remove,
     save,
     changeAccent,
