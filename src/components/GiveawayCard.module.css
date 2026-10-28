@@ -50,3 +50,21 @@
   min-height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--warnDeep); color: #fff;
   font: 600 13px var(--font); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warnDeep) 22%, transparent);
 }
+
+/* List view: one compact row per item. */
+.row { flex-direction: row; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 16px; box-shadow: 0 2px 0 var(--line) }
+.row .main { align-items: center; min-width: 0 }
+.row .check { margin: 0 -6px }
+.row .thumb, .row .noImg { width: 56px; height: 56px; border-radius: 12px }
+.row .noImg { font-size: 0 }
+.row .noImg span { font-size: 18px }
+.row .content { align-items: center }
+.row .body { gap: 4px }
+.row .title { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.row .note { display: none }
+.row .actions { flex: none; border-top: 0; padding-top: 0; flex-direction: column; gap: 4px }
+@media (max-width: 480px) {
+  .row { flex-wrap: wrap }
+  .row .main { flex: 1 1 100% }
+  .row .actions { flex-direction: row; width: 100%; border-top: 1px dashed var(--line); padding-top: 8px }
+}

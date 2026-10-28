@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { countItems, isFilter, type Filter } from "@/lib/items";
+import { countItems, isFilter, isSortOrder, isViewMode, type Filter, type SortOrder, type ViewMode } from "@/lib/items";
 import { STORAGE_KEYS, loadValue, storeValue } from "@/lib/storage";
 import type { Item } from "@/lib/types";
 import { useGiveawayList } from "@/hooks/useGiveawayList";
@@ -30,6 +30,8 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
   const list = useGiveawayList(initialCode, toast.show, theme);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [order, setOrder] = useState<SortOrder>("status");
+  const [viewMode, setViewMode] = useState<ViewMode>("card");
   const [editing, setEditing] = useState<Item | null>(null);
   const [formNonce, setFormNonce] = useState(0);
   const formRef = useRef<HTMLElement>(null);
@@ -37,6 +39,10 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
   useEffect(() => {
     const saved = loadValue(STORAGE_KEYS.filter);
     if (isFilter(saved)) setFilter(saved);
+    const savedOrder = loadValue(STORAGE_KEYS.sort);
+    if (isSortOrder(savedOrder)) setOrder(savedOrder);
+    const savedView = loadValue(STORAGE_KEYS.view);
+    if (isViewMode(savedView)) setViewMode(savedView);
   }, []);
 
   const { code, refresh } = list;
@@ -76,6 +82,16 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
   const changeFilter = useCallback((f: Filter) => {
     setFilter(f);
     storeValue(STORAGE_KEYS.filter, f);
+  }, []);
+
+  const changeOrder = useCallback((o: SortOrder) => {
+    setOrder(o);
+    storeValue(STORAGE_KEYS.sort, o);
+  }, []);
+
+  const changeViewMode = useCallback((v: ViewMode) => {
+    setViewMode(v);
+    storeValue(STORAGE_KEYS.view, v);
   }, []);
 
   const themeControls = (
@@ -142,9 +158,13 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
                 items={list.items}
                 filter={filter}
                 query={query}
+                order={order}
+                viewMode={viewMode}
                 editingId={editing?.id ?? null}
                 onFilter={changeFilter}
                 onQuery={setQuery}
+                onOrder={changeOrder}
+                onViewMode={changeViewMode}
                 onToggle={list.toggle}
                 onEdit={startEdit}
                 onDelete={handleDelete}

@@ -20,6 +20,20 @@
   list-style: none; margin: 0; padding: 0; display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 12px;
 }
+.rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px }
+.viewBar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between }
+.sortWrap { display: flex; align-items: center; gap: 8px; color: var(--mute); font-size: 14px }
+.sortLabel { white-space: nowrap }
+.sort {
+  min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card);
+  color: var(--ink); font: 500 14px var(--font); outline: none;
+}
+.sort:focus { border-color: var(--p) }
+.views { display: flex; gap: 4px; padding: 4px; background: var(--card); border: 1.5px solid var(--line); border-radius: 999px }
+.viewBtn {
+  width: 40px; height: 36px; border-radius: 999px; border: 0; background: transparent; color: var(--mute);
+  font: 600 16px var(--font); display: grid; place-items: center;
+}
 .clear {
   margin-top: 6px; min-height: 44px; padding: 0 20px; border-radius: 999px; border: 1.5px solid var(--line);
   background: var(--card); color: var(--p); font: 600 15px var(--font);

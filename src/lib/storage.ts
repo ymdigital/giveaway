@@ -1,6 +1,8 @@
 export const STORAGE_KEYS = {
   code: "gt-code",
   filter: "gt-filter",
+  sort: "gt-sort",
+  view: "gt-view",
   accent: "gt-accent",
   colorMode: "gt-mode",
 } as const;
