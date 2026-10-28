@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
-import { shortLink } from "@/lib/items";
+import { displayName, shortLink, type ViewMode } from "@/lib/items";
 import type { Item } from "@/lib/types";
 import s from "./GiveawayCard.module.css";
 
 interface GiveawayCardProps {
   item: Item;
+  variant: ViewMode;
   isArmed: boolean;
   isEditing: boolean;
   onToggle: (item: Item) => void;
@@ -13,13 +14,13 @@ interface GiveawayCardProps {
   onDelete: (id: string) => void;
 }
 
-export function GiveawayCard({ item, isArmed, isEditing, onToggle, onEdit, onDelete }: GiveawayCardProps) {
+export function GiveawayCard({ item, variant, isArmed, isEditing, onToggle, onEdit, onDelete }: GiveawayCardProps) {
   const [isImageBroken, setImageBroken] = useState(false);
   const hasImage = Boolean(item.image) && !isImageBroken;
   const done = item.collected;
 
   return (
-    <li className={s.card} style={{ borderColor: isEditing ? "var(--p)" : undefined }}>
+    <li className={variant === "list" ? `${s.card} ${s.row}` : s.card} style={{ borderColor: isEditing ? "var(--p)" : undefined }}>
       <div className={s.main}>
         <button
           type="button"
@@ -48,7 +49,7 @@ export function GiveawayCard({ item, isArmed, isEditing, onToggle, onEdit, onDel
           )}
           <div className={s.body}>
             <div className={s.title} style={{ textDecoration: done ? "line-through" : "none" }}>
-              {item.title || item.author || shortLink(item.url)}
+              {displayName(item)}
             </div>
             {(item.pickup || done) && (
               <div className={s.chips}>

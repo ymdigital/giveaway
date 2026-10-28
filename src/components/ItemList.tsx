@@ -1,5 +1,15 @@
 "use client";
-import { countItems, FILTERS, visibleItems, type Filter } from "@/lib/items";
+import {
+  countItems,
+  FILTERS,
+  isSortOrder,
+  SORT_ORDERS,
+  VIEW_MODES,
+  visibleItems,
+  type Filter,
+  type SortOrder,
+  type ViewMode,
+} from "@/lib/items";
 import type { Item } from "@/lib/types";
 import { useArmedDelete } from "@/hooks/useArmedDelete";
 import { GiveawayCard } from "./GiveawayCard";
@@ -11,13 +21,29 @@ const FILTER_LABELS: Record<Filter, string> = {
   done: "เก็บแล้ว",
 };
 
+const SORT_LABELS: Record<SortOrder, string> = {
+  status: "ยังไม่ได้เก็บก่อน",
+  newest: "ใหม่สุดก่อน",
+  oldest: "เก่าสุดก่อน",
+  title: "ชื่อ ก–ฮ",
+};
+
+const VIEW_LABELS: Record<ViewMode, { icon: string; label: string }> = {
+  card: { icon: "▦", label: "มุมมองการ์ด" },
+  list: { icon: "☰", label: "มุมมองรายการ" },
+};
+
 interface ItemListProps {
   items: Item[];
   filter: Filter;
   query: string;
+  order: SortOrder;
+  viewMode: ViewMode;
   editingId: string | null;
   onFilter: (filter: Filter) => void;
   onQuery: (query: string) => void;
+  onOrder: (order: SortOrder) => void;
+  onViewMode: (viewMode: ViewMode) => void;
   onToggle: (item: Item) => void;
   onEdit: (item: Item) => void;
   onDelete: (id: string) => void;
@@ -52,10 +78,46 @@ function EmptyState({ hasItems, query, onClear }: { hasItems: boolean; query: st
   );
 }
 
+function ViewControls({ order, viewMode, onOrder, onViewMode }: Pick<ItemListProps, "order" | "viewMode" | "onOrder" | "onViewMode">) {
+  return (
+    <div className={s.viewBar}>
+      <label className={s.sortWrap}>
+        <span className={s.sortLabel}>เรียงตาม</span>
+        <select
+          className={s.sort}
+          value={order}
+          onChange={(e) => {
+            if (isSortOrder(e.target.value)) onOrder(e.target.value);
+          }}
+        >
+          {SORT_ORDERS.map((o) => (
+            <option key={o} value={o}>{SORT_LABELS[o]}</option>
+          ))}
+        </select>
+      </label>
+      <div className={s.views} role="group" aria-label="รูปแบบการแสดงผล">
+        {VIEW_MODES.map((v) => (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={viewMode === v}
+            aria-label={VIEW_LABELS[v].label}
+            title={VIEW_LABELS[v].label}
+            className={viewMode === v ? `${s.viewBtn} ${s.tabOn}` : s.viewBtn}
+            onClick={() => onViewMode(v)}
+          >
+            <span aria-hidden="true">{VIEW_LABELS[v].icon}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ItemList(props: ItemListProps) {
-  const { items, filter, query, editingId, onFilter, onQuery, onToggle, onEdit, onDelete } = props;
+  const { items, filter, query, order, viewMode, editingId, onFilter, onQuery, onToggle, onEdit, onDelete } = props;
   const { armedId, press } = useArmedDelete(onDelete);
-  const view = visibleItems(items, filter, query);
+  const view = visibleItems(items, filter, query, order);
   const counts = countItems(items);
   const tabCount: Record<Filter, number> = { all: counts.all, todo: counts.todo, done: counts.done };
 
@@ -87,12 +149,14 @@ export function ItemList(props: ItemListProps) {
           />
         </div>
       </div>
+      <ViewControls order={order} viewMode={viewMode} onOrder={props.onOrder} onViewMode={props.onViewMode} />
       {view.length > 0 ? (
-        <ul className={s.grid}>
+        <ul className={viewMode === "list" ? s.rows : s.grid}>
           {view.map((item) => (
             <GiveawayCard
               key={item.id}
               item={item}
+              variant={viewMode}
               isArmed={armedId === item.id}
               isEditing={editingId === item.id}
               onToggle={onToggle}
