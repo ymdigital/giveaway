@@ -1,5 +1,14 @@
 import { describe, expect, test } from "vitest";
-import { countItems, isSortOrder, isViewMode, shortLink, sortItems, titleFromText, visibleItems } from "./items";
+import {
+  countItems,
+  isSortOrder,
+  isViewMode,
+  pickupDateOptions,
+  shortLink,
+  sortItems,
+  titleFromText,
+  visibleItems,
+} from "./items";
 import type { Item } from "./types";
 
 const item = (over: Partial<Item>): Item => ({
@@ -57,6 +66,17 @@ describe("visibleItems", () => {
     const dated = [item({ id: "d", pickupDates: [{ date: "2026-11-15", collected: false }] }), item({ id: "n" })];
     expect(visibleItems(dated, "all", "พ.ย.").map((i) => i.id)).toEqual(["d"]);
   });
+  test("filters by pickup date together with the status tab", () => {
+    const dated = [
+      item({ id: "a", pickupDates: [{ date: "2026-11-15", collected: false }, { date: "2026-11-16", collected: false }] }),
+      item({ id: "b", collected: true, pickupDates: [{ date: "2026-11-15", collected: true }] }),
+      item({ id: "c", pickupDates: [{ date: "2026-11-16", collected: false }] }),
+      item({ id: "none" }),
+    ];
+    expect(visibleItems(dated, "all", "", "oldest", "2026-11-15").map((i) => i.id)).toEqual(["a", "b"]);
+    expect(visibleItems(dated, "todo", "", "oldest", "2026-11-15").map((i) => i.id)).toEqual(["a"]);
+    expect(visibleItems(dated, "all", "", "oldest", null)).toHaveLength(4);
+  });
   test("applies the requested order", () => {
     expect(visibleItems(items, "todo", "", "oldest").map((i) => i.id)).toEqual(["old-todo", "new-todo"]);
   });
@@ -90,4 +110,21 @@ test("isSortOrder and isViewMode accept only known values", () => {
   expect(isSortOrder(null)).toBe(false);
   expect(isViewMode("list")).toBe(true);
   expect(isViewMode("grid")).toBe(false);
+});
+
+describe("pickupDateOptions", () => {
+  test("lists only dates present in items, ascending, with item counts", () => {
+    const dated = [
+      item({ id: "a", pickupDates: [{ date: "2026-11-16", collected: false }, { date: "2026-11-15", collected: true }] }),
+      item({ id: "b", pickupDates: [{ date: "2026-11-16", collected: false }] }),
+      item({ id: "none" }),
+    ];
+    expect(pickupDateOptions(dated)).toEqual([
+      { date: "2026-11-15", count: 1 },
+      { date: "2026-11-16", count: 2 },
+    ]);
+  });
+  test("is empty when no item has a pickup date", () => {
+    expect(pickupDateOptions([item({})])).toEqual([]);
+  });
 });
