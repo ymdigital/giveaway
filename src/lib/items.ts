@@ -57,15 +57,31 @@ export function sortItems(items: readonly Item[], order: SortOrder = "status"): 
   return [...items].sort(COMPARATORS[order]);
 }
 
+export type PickupDateOption = { date: string; count: number };
+
+/** Pickup dates that occur in `items`, ascending, with how many items have each. */
+export function pickupDateOptions(items: readonly Item[]): PickupDateOption[] {
+  const counts = new Map<string, number>();
+  for (const i of items) {
+    for (const d of new Set(i.pickupDates.map((p) => p.date))) counts.set(d, (counts.get(d) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+}
+
+/** `date` (YYYY-MM-DD) keeps only items picked up on that day; null keeps all. */
 export function visibleItems(
   items: readonly Item[],
   filter: Filter,
   query: string,
   order: SortOrder = "status",
+  date: string | null = null,
 ): Item[] {
   const q = query.trim().toLowerCase();
   const filtered = items
     .filter((i) => filter === "all" || (filter === "done") === i.collected)
+    .filter((i) => date === null || i.pickupDates.some((d) => d.date === date))
     .filter(
       (i) =>
         !q ||

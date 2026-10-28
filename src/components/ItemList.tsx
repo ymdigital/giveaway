@@ -3,14 +3,17 @@ import {
   countItems,
   FILTERS,
   isSortOrder,
+  pickupDateOptions,
   SORT_ORDERS,
   VIEW_MODES,
   visibleItems,
   type Filter,
+  type PickupDateOption,
   type SortOrder,
   type ViewMode,
 } from "@/lib/items";
 import type { Item } from "@/lib/types";
+import { formatPickupDate } from "@/lib/pickup";
 import { useArmedDelete } from "@/hooks/useArmedDelete";
 import { GiveawayCard } from "./GiveawayCard";
 import s from "./ItemList.module.css";
@@ -40,10 +43,12 @@ interface ItemListProps {
   query: string;
   order: SortOrder;
   viewMode: ViewMode;
+  dateFilter: string | null;
   editingId: string | null;
   onFilter: (filter: Filter) => void;
   onQuery: (query: string) => void;
   onOrder: (order: SortOrder) => void;
+  onDateFilter: (date: string | null) => void;
   onViewMode: (viewMode: ViewMode) => void;
   onToggle: (item: Item) => void;
   onToggleDate: (item: Item, date: string) => void;
@@ -80,23 +85,56 @@ function EmptyState({ hasItems, query, onClear }: { hasItems: boolean; query: st
   );
 }
 
-function ViewControls({ order, viewMode, onOrder, onViewMode }: Pick<ItemListProps, "order" | "viewMode" | "onOrder" | "onViewMode">) {
+const ALL_DATES = "";
+
+interface DateFilterProps {
+  options: PickupDateOption[];
+  value: string | null;
+  onChange: (date: string | null) => void;
+}
+
+function DateFilter({ options, value, onChange }: DateFilterProps) {
+  return (
+    <label className={s.sortWrap}>
+      <span className={s.sortLabel}>วันรับ</span>
+      <select
+        className={value ? `${s.sort} ${s.sortOn}` : s.sort}
+        value={value ?? ALL_DATES}
+        onChange={(e) => onChange(e.target.value === ALL_DATES ? null : e.target.value)}
+      >
+        <option value={ALL_DATES}>ทุกวัน</option>
+        {options.map((o) => (
+          <option key={o.date} value={o.date}>{formatPickupDate(o.date)} ({o.count})</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+type ViewControlsProps = Pick<ItemListProps, "order" | "viewMode" | "onOrder" | "onViewMode"> & {
+  dateFilter: DateFilterProps;
+};
+
+function ViewControls({ order, viewMode, onOrder, onViewMode, dateFilter }: ViewControlsProps) {
   return (
     <div className={s.viewBar}>
-      <label className={s.sortWrap}>
-        <span className={s.sortLabel}>เรียงตาม</span>
-        <select
-          className={s.sort}
-          value={order}
-          onChange={(e) => {
-            if (isSortOrder(e.target.value)) onOrder(e.target.value);
-          }}
-        >
-          {SORT_ORDERS.map((o) => (
-            <option key={o} value={o}>{SORT_LABELS[o]}</option>
-          ))}
-        </select>
-      </label>
+      <div className={s.selects}>
+        {dateFilter.options.length > 0 && <DateFilter {...dateFilter} />}
+        <label className={s.sortWrap}>
+          <span className={s.sortLabel}>เรียงตาม</span>
+          <select
+            className={s.sort}
+            value={order}
+            onChange={(e) => {
+              if (isSortOrder(e.target.value)) onOrder(e.target.value);
+            }}
+          >
+            {SORT_ORDERS.map((o) => (
+              <option key={o} value={o}>{SORT_LABELS[o]}</option>
+            ))}
+          </select>
+        </label>
+      </div>
       <div className={s.views} role="group" aria-label="รูปแบบการแสดงผล">
         {VIEW_MODES.map((v) => (
           <button
@@ -119,7 +157,10 @@ function ViewControls({ order, viewMode, onOrder, onViewMode }: Pick<ItemListPro
 export function ItemList(props: ItemListProps) {
   const { items, filter, query, order, viewMode, editingId, onFilter, onQuery, onToggle, onEdit, onDelete } = props;
   const { armedId, press } = useArmedDelete(onDelete);
-  const view = visibleItems(items, filter, query, order);
+  const dateOptions = pickupDateOptions(items);
+  // A chosen date that no longer exists in the list (e.g. its item was deleted) means "all dates".
+  const activeDate = dateOptions.some((o) => o.date === props.dateFilter) ? props.dateFilter : null;
+  const view = visibleItems(items, filter, query, order, activeDate);
   const counts = countItems(items);
   const tabCount: Record<Filter, number> = { all: counts.all, todo: counts.todo, done: counts.done };
 
@@ -151,7 +192,13 @@ export function ItemList(props: ItemListProps) {
           />
         </div>
       </div>
-      <ViewControls order={order} viewMode={viewMode} onOrder={props.onOrder} onViewMode={props.onViewMode} />
+      <ViewControls
+        order={order}
+        viewMode={viewMode}
+        onOrder={props.onOrder}
+        onViewMode={props.onViewMode}
+        dateFilter={{ options: dateOptions, value: activeDate, onChange: props.onDateFilter }}
+      />
       {view.length > 0 ? (
         <ul className={viewMode === "list" ? s.rows : s.grid}>
           {view.map((item) => (

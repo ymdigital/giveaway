@@ -24,6 +24,8 @@
 .viewBar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between }
 .sortWrap { display: flex; align-items: center; gap: 8px; color: var(--mute); font-size: 14px }
 .sortLabel { white-space: nowrap }
+.selects { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center }
+.sortOn { border-color: var(--p); color: var(--p); font-weight: 600 }
 .sort {
   min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card);
   color: var(--ink); font: 500 14px var(--font); outline: none;

@@ -32,6 +32,7 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
   const [query, setQuery] = useState("");
   const [order, setOrder] = useState<SortOrder>("status");
   const [viewMode, setViewMode] = useState<ViewMode>("card");
+  const [dateFilter, setDateFilter] = useState<string | null>(null);
   const [editing, setEditing] = useState<Item | null>(null);
   const [formNonce, setFormNonce] = useState(0);
   const formRef = useRef<HTMLElement>(null);
@@ -76,6 +77,7 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
   const handleLeave = useCallback(() => {
     resetForm();
     setQuery("");
+    setDateFilter(null);
     leave();
   }, [leave, resetForm]);
 
@@ -160,10 +162,12 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
                 query={query}
                 order={order}
                 viewMode={viewMode}
+                dateFilter={dateFilter}
                 editingId={editing?.id ?? null}
                 onFilter={changeFilter}
                 onQuery={setQuery}
                 onOrder={changeOrder}
+                onDateFilter={setDateFilter}
                 onViewMode={changeViewMode}
                 onToggle={list.toggle}
                 onToggleDate={list.toggleDate}
