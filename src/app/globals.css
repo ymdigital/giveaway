@@ -1,0 +1,125 @@
+/* ---------- tokens (same as original Index.html) ---------- */
+:root {
+  --bg: #fff4f8; --bg2: #ffe6f0; --card: #ffffff; --ink: #4a2a3a; --muted: #9a7486;
+  --line: #f6d3e2; --accent: #ec5f98; --accent-ink: #ffffff; --accent-soft: #ffe0ec;
+  --done: #3fa87a; --done-soft: #dcf3e8; --warn: #d9722a; --warn-soft: #fdebd8;
+  --shadow: 0 6px 20px -10px rgba(200, 80, 130, .35);
+  --display: var(--font-mali), var(--font-anuphan), system-ui, sans-serif;
+  --body: var(--font-anuphan), "Noto Sans Thai", system-ui, sans-serif;
+  color-scheme: light;
+}
+:root[data-accent="lavender"] { --accent: #9b6be8; --accent-soft: #eee4ff; --line: #e6dafa; --bg: #f8f4ff; --bg2: #efe6ff }
+:root[data-accent="mint"] { --accent: #2fa98a; --accent-soft: #dbf4ec; --line: #cfeee3; --bg: #f2fbf8; --bg2: #e1f6ee }
+:root[data-accent="peach"] { --accent: #f07b4f; --accent-soft: #ffe6da; --line: #fadacb; --bg: #fff6f1; --bg2: #ffe9dd }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #21141b; --bg2: #2c1a24; --card: #2f1d27; --ink: #f8e6ee; --muted: #c09aab; --line: #4a2e3c;
+    --accent-soft: #4a2337; --done: #5fcf9c; --done-soft: #1d3a2e; --warn: #f2a25e; --warn-soft: #41291a;
+    --shadow: 0 6px 20px -12px rgba(0, 0, 0, .6); color-scheme: dark;
+  }
+  :root[data-accent="lavender"] { --accent-soft: #3a2a58; --line: #3f3255; --bg: #1b1626; --bg2: #251d33; --card: #2a2138 }
+  :root[data-accent="mint"] { --accent-soft: #183b31; --line: #25443a; --bg: #121d1a; --bg2: #182823; --card: #1c2c27 }
+  :root[data-accent="peach"] { --accent-soft: #4a2a1c; --line: #4a3227; --bg: #21170f; --bg2: #2c1f16; --card: #30221a }
+}
+
+/* ---------- base ---------- */
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55;
+  background-image: radial-gradient(circle at 1px 1px, var(--line) 1.2px, transparent 1.3px);
+  background-size: 22px 22px;
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
+  min-height: 100vh;
+  transition: background-color .3s;
+}
+/* soft dreamy glow blobs behind the dots */
+body::before, body::after {
+  content: ""; position: fixed; z-index: -1; pointer-events: none; border-radius: 50%;
+  filter: blur(60px); opacity: .55;
+}
+body::before { width: 340px; height: 340px; top: -120px; right: -80px; background: var(--accent-soft) }
+body::after { width: 280px; height: 280px; bottom: -100px; left: -90px; background: var(--bg2) }
+
+[hidden] { display: none !important }
+button, input, textarea { font: inherit; color: inherit }
+:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px }
+::selection { background: var(--accent-soft) }
+
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; position: relative }
+
+/* ---------- shared bits ---------- */
+.panel {
+  position: relative; background: var(--card); border: 1.5px solid var(--line); border-radius: 22px;
+  padding: 18px; box-shadow: var(--shadow);
+}
+/* washi tape sticker on top of a panel */
+.panel.tape::before {
+  content: ""; position: absolute; top: -10px; left: 50%; width: 92px; height: 20px;
+  transform: translateX(-50%) rotate(-3deg); border-radius: 3px; opacity: .85;
+  background: repeating-linear-gradient(45deg, var(--accent-soft) 0 6px, var(--bg2) 6px 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+h2 { font-family: var(--display); font-size: 20px; margin: 0 0 12px; font-weight: 600 }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); font-weight: 500 }
+label em { font-style: normal; opacity: .75 }
+input, textarea {
+  background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px;
+  font-size: 16px; width: 100%; min-width: 0; transition: border-color .15s, box-shadow .15s;
+}
+textarea { resize: vertical; min-height: 64px }
+input:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 4px var(--accent-soft) }
+
+.btn {
+  border: 0; border-radius: 999px; padding: 11px 18px; font-weight: 600; cursor: pointer;
+  transition: transform .15s, box-shadow .15s, opacity .15s;
+}
+.btn:not(:disabled):hover { transform: translateY(-1px) }
+.btn:not(:disabled):active { transform: translateY(1px) scale(.98) }
+.btn.primary {
+  background: var(--accent); color: var(--accent-ink);
+  box-shadow: 0 6px 16px -8px var(--accent), inset 0 -2px 0 rgba(0, 0, 0, .08);
+}
+.btn.ghost { background: transparent; border: 1.5px solid var(--line) }
+.btn.ghost:not(:disabled):hover { background: var(--accent-soft) }
+.btn:disabled { opacity: .55; cursor: wait }
+
+.mini {
+  border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 12px;
+  font-size: 13px; cursor: pointer; text-decoration: none; color: var(--ink); transition: background .15s;
+}
+.mini:hover { background: var(--accent-soft) }
+.mini.danger { color: var(--warn) }
+.mini.danger:hover { background: var(--warn-soft) }
+.mini.danger.armed { background: var(--warn); color: #fff; border-color: var(--warn) }
+
+.err { color: var(--warn); font-size: 13px; margin: 0 }
+.row { display: flex; gap: 8px }
+.row .primary, .row .ghost { flex: 1 }
+
+.chip {
+  font-size: 12px; padding: 1px 9px; border-radius: 999px; background: var(--accent-soft);
+  color: var(--ink); overflow-wrap: anywhere;
+}
+.chip.got { background: var(--done-soft); color: var(--done); font-weight: 600 }
+
+.empty {
+  text-align: center; color: var(--muted); padding: 32px 12px; border: 1.5px dashed var(--line);
+  border-radius: 16px; margin: 0;
+}
+.empty b { display: block; font-family: var(--display); color: var(--ink); font-size: 18px; margin-bottom: 4px }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 18px;
+  border-radius: 999px; font-size: 14px; z-index: 20; max-width: calc(100% - 32px); text-align: center;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .4); animation: toast-in .25s ease-out;
+}
+.toast::before { content: "✦ "; color: var(--accent) }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px) } }
+
+footer { text-align: center; color: var(--muted); font-size: 13px }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important }
+}

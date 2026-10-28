@@ -1,0 +1,11 @@
+.bar { border-left: 6px solid var(--accent) }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between }
+.codebox { display: flex; flex-direction: column; gap: 2px; min-width: 0 }
+.codebox small { color: var(--muted); font-size: 12px }
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; font-weight: 700;
+  letter-spacing: .06em; color: var(--accent); user-select: all; overflow-wrap: anywhere;
+}
+.code::before { content: "♡ "; font-family: var(--display) }
+.actions { display: flex; flex-wrap: wrap; gap: 6px }
+.sharelink { width: 100%; font-size: 13px; font-family: ui-monospace, monospace; margin-top: 10px }

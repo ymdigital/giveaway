@@ -1,0 +1,33 @@
+/* concert-ticket style card */
+.ticket {
+  max-width: 520px; width: 100%; margin: 12px auto 0; padding: 0; display: grid;
+  grid-template-columns: var(--stub) 1fr; overflow: hidden;
+  --notch: 14px; --stub: 54px;
+  -webkit-mask: radial-gradient(circle var(--notch) at var(--stub) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+                radial-gradient(circle var(--notch) at var(--stub) 100%, #0000 98%, #000) bottom / 100% 50% no-repeat;
+          mask: radial-gradient(circle var(--notch) at var(--stub) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+                radial-gradient(circle var(--notch) at var(--stub) 100%, #0000 98%, #000) bottom / 100% 50% no-repeat;
+}
+.stub {
+  background: repeating-linear-gradient(-45deg, var(--accent) 0 10px, color-mix(in srgb, var(--accent) 82%, #fff) 10px 20px);
+  color: var(--accent-ink); display: flex; flex-direction: column; align-items: center;
+  justify-content: space-between; padding: 22px 0; border-right: 2px dashed var(--card);
+}
+.stub span {
+  writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--display);
+  font-weight: 700; letter-spacing: .3em; font-size: 12px;
+}
+.stub b { font-size: 20px }
+.body { padding: 22px 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0 }
+.body > p { margin: 0; color: var(--muted) }
+.heading { margin: 0 }
+.form { display: flex; flex-direction: column; gap: 10px }
+.codeInput {
+  text-transform: lowercase; letter-spacing: .06em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.hint { font-size: 12px; margin: -2px 0 0; color: var(--muted) }
+@media (max-width: 420px) {
+  .ticket { --stub: 40px }
+  .body { padding: 18px 14px }
+}

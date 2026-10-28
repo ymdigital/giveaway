@@ -1,0 +1,16 @@
+.preview {
+  display: flex; gap: 10px; align-items: flex-start; background: var(--bg);
+  border: 1.5px dashed var(--line); border-radius: 14px; padding: 10px; font-size: 13px;
+}
+.preview img {
+  width: 76px; height: 76px; object-fit: cover; border-radius: 10px; flex: none; background: var(--bg2);
+  border: 3px solid var(--card); box-shadow: 0 2px 6px rgba(0, 0, 0, .1); transform: rotate(-2deg);
+}
+.text { min-width: 0; display: flex; flex-direction: column; gap: 2px }
+.author { font-weight: 600; color: var(--ink) }
+.body {
+  color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden; overflow-wrap: anywhere;
+}
+.spinner { color: var(--accent); display: inline-block; animation: spin 1.2s linear infinite }
+@keyframes spin { to { transform: rotate(360deg) } }

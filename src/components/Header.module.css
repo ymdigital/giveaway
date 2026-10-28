@@ -1,0 +1,42 @@
+.header {
+  position: relative; display: flex; flex-wrap: wrap; align-items: flex-end;
+  justify-content: space-between; gap: 12px; padding-top: 6px;
+}
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600 }
+.title {
+  font-family: var(--display); font-size: clamp(30px, 6vw, 44px); line-height: 1.1;
+  margin: 2px 0 4px; font-weight: 700; position: relative;
+}
+.bow { display: inline-block; transform: rotate(-8deg); animation: wiggle 3.2s ease-in-out infinite }
+.sticker {
+  display: inline-block; vertical-align: middle; margin-left: 10px; padding: 3px 10px;
+  font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--accent);
+  background: var(--card); border: 1.5px dashed var(--accent); border-radius: 999px;
+  transform: rotate(6deg) translateY(-6px); box-shadow: var(--shadow);
+}
+.sub { color: var(--muted); margin: 0 }
+
+.sparkles span {
+  position: absolute; color: var(--accent); opacity: .5; pointer-events: none;
+  animation: twinkle 2.8s ease-in-out infinite;
+}
+.sparkles span:nth-child(1) { top: -6px; left: 46%; font-size: 14px }
+.sparkles span:nth-child(2) { top: 18px; right: 30%; font-size: 18px; animation-delay: .7s }
+.sparkles span:nth-child(3) { bottom: 4px; left: 62%; font-size: 12px; animation-delay: 1.3s }
+.sparkles span:nth-child(4) { top: 0; right: 4px; font-size: 11px; animation-delay: 2s }
+@media (max-width: 600px) { .sparkles span:nth-child(n+3) { display: none } }
+
+.swatches {
+  display: flex; gap: 8px; align-items: center; background: var(--card);
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 10px; box-shadow: var(--shadow);
+}
+.swatches span { font-size: 12px; color: var(--muted); margin-right: 2px }
+.sw {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--card);
+  box-shadow: 0 0 0 1.5px var(--line); cursor: pointer; padding: 0; transition: transform .15s;
+}
+.sw:hover { transform: scale(1.12) }
+.sw[aria-pressed="true"] { box-shadow: 0 0 0 2.5px var(--ink) }
+
+@keyframes twinkle { 0%, 100% { opacity: .2; transform: scale(.85) } 50% { opacity: .75; transform: scale(1.1) } }
+@keyframes wiggle { 0%, 100% { transform: rotate(-8deg) } 50% { transform: rotate(6deg) } }
