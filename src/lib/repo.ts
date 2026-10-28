@@ -1,11 +1,13 @@
 import "server-only";
 import { getSupabase } from "./supabase-server";
-import type { CreateItemInput, UpdateItemInput } from "./schemas";
-import type { Accent, Item, ListData } from "./types";
+import type { CreateItemInput, CreateListInput, UpdateItemInput, UpdateListInput } from "./schemas";
+import type { Accent, ColorMode, Item, ListData } from "./types";
 
 const ITEM_COLUMNS =
   "id,url,title,pickup,note,image,author,collected,created_at,updated_at";
 const UNIQUE_VIOLATION = "23505";
+// Soft-deleted items stay restorable (undo) for this long, then are purged.
+const PURGE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
 type ItemRow = {
   id: string;
@@ -53,8 +55,10 @@ function toColumns(input: UpdateItemInput): Record<string, string | boolean | nu
 }
 
 /** Returns false when the code already exists. */
-export async function createList(code: string): Promise<boolean> {
-  const { error } = await getSupabase().from("lists").insert({ code });
+export async function createList(input: CreateListInput): Promise<boolean> {
+  const { error } = await getSupabase()
+    .from("lists")
+    .insert({ code: input.code, accent: input.accent, color_mode: input.colorMode });
   if (!error) return true;
   if (error.code === UNIQUE_VIOLATION) return false;
   throw new RepoError("create list", error);
@@ -64,7 +68,7 @@ export async function getList(code: string): Promise<ListData | null> {
   const db = getSupabase();
   const { data: list, error } = await db
     .from("lists")
-    .select("code,accent")
+    .select("code,accent,color_mode")
     .eq("code", code)
     .maybeSingle();
   if (error) throw new RepoError("get list", error);
@@ -74,24 +78,31 @@ export async function getList(code: string): Promise<ListData | null> {
     .from("items")
     .select(ITEM_COLUMNS)
     .eq("list_code", code)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
   if (itemsError) throw new RepoError("get items", itemsError);
 
   return {
     code: list.code,
     accent: list.accent as Accent,
+    colorMode: list.color_mode as ColorMode,
     items: (rows as ItemRow[]).map(toItem),
   };
 }
 
 /** Returns false when the list does not exist. */
-export async function setAccent(code: string, accent: Accent): Promise<boolean> {
+export async function updateList(code: string, patch: UpdateListInput): Promise<boolean> {
+  const columns = Object.fromEntries(
+    Object.entries({ accent: patch.accent, color_mode: patch.colorMode }).filter(
+      ([, v]) => v !== undefined,
+    ),
+  );
   const { data, error } = await getSupabase()
     .from("lists")
-    .update({ accent })
+    .update(columns)
     .eq("code", code)
     .select("code");
-  if (error) throw new RepoError("set accent", error);
+  if (error) throw new RepoError("update list", error);
   return data.length > 0;
 }
 
@@ -109,7 +120,8 @@ export async function countItems(code: string): Promise<number | null> {
   const { count, error: countError } = await db
     .from("items")
     .select("id", { count: "exact", head: true })
-    .eq("list_code", code);
+    .eq("list_code", code)
+    .is("deleted_at", null);
   if (countError) throw new RepoError("count items", countError);
   return count ?? 0;
 }
@@ -135,20 +147,51 @@ export async function updateItem(
     .update(toColumns(input))
     .eq("list_code", code)
     .eq("id", id)
+    .is("deleted_at", null)
     .select(ITEM_COLUMNS)
     .maybeSingle();
   if (error) throw new RepoError("update item", error);
   return data ? toItem(data as ItemRow) : null;
 }
 
-/** Returns false when no item with this id exists in this list. */
+/** Soft delete. Returns false when no live item with this id exists in this list. */
 export async function deleteItem(code: string, id: string): Promise<boolean> {
-  const { data, error } = await getSupabase()
+  const db = getSupabase();
+  const { data, error } = await db
+    .from("items")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("list_code", code)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select("id");
+  if (error) throw new RepoError("delete item", error);
+
+  const purgeBefore = new Date(Date.now() - PURGE_AFTER_MS).toISOString();
+  const { error: purgeError } = await db
     .from("items")
     .delete()
     .eq("list_code", code)
-    .eq("id", id)
-    .select("id");
-  if (error) throw new RepoError("delete item", error);
+    .lt("deleted_at", purgeBefore);
+  if (purgeError) {
+    // Housekeeping only — the delete itself succeeded, so don't fail the request.
+    console.warn(
+      JSON.stringify({ level: "warn", msg: "purge deleted items", list_code: code, error: purgeError.message }),
+    );
+  }
+
   return data.length > 0;
+}
+
+/** Undo a soft delete. Returns null when there is nothing to restore. */
+export async function restoreItem(code: string, id: string): Promise<Item | null> {
+  const { data, error } = await getSupabase()
+    .from("items")
+    .update({ deleted_at: null })
+    .eq("list_code", code)
+    .eq("id", id)
+    .not("deleted_at", "is", null)
+    .select(ITEM_COLUMNS)
+    .maybeSingle();
+  if (error) throw new RepoError("restore item", error);
+  return data ? toItem(data as ItemRow) : null;
 }

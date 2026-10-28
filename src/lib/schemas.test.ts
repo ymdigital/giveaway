@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { codeSchema, createItemSchema, updateItemSchema } from "./schemas";
+import { codeSchema, createItemSchema, createListSchema, updateItemSchema, updateListSchema } from "./schemas";
 
 describe("codeSchema", () => {
   test("normalizes before validating", () => {
@@ -34,5 +34,21 @@ describe("updateItemSchema", () => {
   });
   test("rejects empty patch", () => {
     expect(updateItemSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("list schemas", () => {
+  test("create accepts optional theme prefs", () => {
+    expect(createListSchema.parse({ code: "my-list-01", accent: "mint", colorMode: "dark" })).toEqual({
+      code: "my-list-01",
+      accent: "mint",
+      colorMode: "dark",
+    });
+    expect(createListSchema.safeParse({ code: "my-list-01", colorMode: "neon" }).success).toBe(false);
+  });
+  test("update needs accent or colorMode", () => {
+    expect(updateListSchema.safeParse({}).success).toBe(false);
+    expect(updateListSchema.safeParse({ colorMode: "light" }).success).toBe(true);
+    expect(updateListSchema.safeParse({ accent: "peach" }).success).toBe(true);
   });
 });

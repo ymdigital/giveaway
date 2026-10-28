@@ -1,6 +1,9 @@
 export const ACCENTS = ["pink", "lavender", "mint", "peach"] as const;
 export type Accent = (typeof ACCENTS)[number];
 
+export const COLOR_MODES = ["system", "light", "dark"] as const;
+export type ColorMode = (typeof COLOR_MODES)[number];
+
 export type Item = {
   id: string;
   url: string;
@@ -17,6 +20,7 @@ export type Item = {
 export type ListData = {
   code: string;
   accent: Accent;
+  colorMode: ColorMode;
   items: Item[];
 };
 

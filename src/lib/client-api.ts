@@ -1,5 +1,5 @@
 import { MSG } from "./messages";
-import type { Accent, ApiResult, Item, ListData, Preview } from "./types";
+import type { Accent, ApiResult, ColorMode, Item, ListData, Preview } from "./types";
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -37,21 +37,25 @@ export type ItemDraft = {
   author?: string;
 };
 
+export type ListPrefs = { accent?: Accent; colorMode?: ColorMode };
+
 export const api = {
-  createList: (code: string) =>
-    request<ListData>("/api/lists", { method: "POST", body: JSON.stringify({ code }) }),
-  openList: (code: string) => request<ListData>(listPath(code)),
-  setAccent: (code: string, accent: Accent) =>
-    request<{ accent: Accent }>(listPath(code), {
-      method: "PATCH",
-      body: JSON.stringify({ accent }),
+  createList: (code: string, prefs: ListPrefs) =>
+    request<ListData>("/api/lists", {
+      method: "POST",
+      body: JSON.stringify({ code, ...prefs }),
     }),
+  openList: (code: string) => request<ListData>(listPath(code)),
+  updateList: (code: string, prefs: ListPrefs) =>
+    request<ListPrefs>(listPath(code), { method: "PATCH", body: JSON.stringify(prefs) }),
   addItem: (code: string, draft: ItemDraft) =>
     request<Item>(`${listPath(code)}/items`, { method: "POST", body: JSON.stringify(draft) }),
   updateItem: (code: string, id: string, patch: Partial<ItemDraft> & { collected?: boolean }) =>
     request<Item>(itemPath(code, id), { method: "PATCH", body: JSON.stringify(patch) }),
   deleteItem: (code: string, id: string) =>
     request<{ id: string }>(itemPath(code, id), { method: "DELETE" }),
+  restoreItem: (code: string, id: string) =>
+    request<Item>(`${itemPath(code, id)}/restore`, { method: "POST" }),
   async preview(url: string): Promise<Preview | null> {
     try {
       const res = await fetch(`/api/preview?url=${encodeURIComponent(url)}`);

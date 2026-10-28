@@ -63,22 +63,31 @@ export const ItemForm = forwardRef<HTMLElement, ItemFormProps>(function ItemForm
     if (isSaved) onSaved();
   }
 
-  const submitLabel = editing ? "บันทึกการแก้ไข" : "＋ เพิ่มลงเช็กลิสต์";
-
   return (
-    <section ref={ref} className={`panel tape ${s.panel}`}>
-      <h2>{editing ? "แก้ไขรายการ ✎" : "เพิ่ม Giveaway ใหม่ ✿"}</h2>
+    <aside
+      ref={ref}
+      className={s.panel}
+      style={{ borderColor: editing ? "var(--p)" : undefined }}
+    >
+      {editing ? (
+        <div className={s.title} style={{ color: "var(--p)" }}>แก้ไขรายการ ✎</div>
+      ) : (
+        <div className={s.title}>✿ เพิ่ม Giveaway</div>
+      )}
       <form noValidate className={s.form} onSubmit={handleSubmit}>
-        <label>
-          ลิงก์ต้นโพสต์ (X / Twitter หรือเว็บอื่น)
+        <label className="field">
+          ลิงก์ต้นโพสต์
           <input
             id="fUrl"
+            className="input"
+            style={{ borderColor: isUrlInvalid ? "var(--warn)" : undefined }}
             type="url"
             inputMode="url"
-            placeholder="วางลิงก์ เช่น https://x.com/…/status/…"
+            placeholder="วางลิงก์ x.com/…/status/…"
             autoComplete="off"
             maxLength={LIMITS.url}
             value={url}
+            aria-invalid={isUrlInvalid}
             onChange={(e) => {
               setUrl(e.target.value);
               preview.schedule(e.target.value);
@@ -86,46 +95,54 @@ export const ItemForm = forwardRef<HTMLElement, ItemFormProps>(function ItemForm
             onBlur={(e) => preview.flush(e.target.value)}
           />
         </label>
-        {isUrlInvalid && <p className="err">{MSG.badUrl}</p>}
+        {isUrlInvalid && <div className={s.error} role="alert">⚠ {MSG.badUrl}</div>}
         <PreviewCard state={preview.state} />
-        <label>
-          ชื่อรายการ <em>(ไม่ใส่ก็ได้)</em>
+        <label className="field">
+          ชื่อรายการ
           <input
+            className="input"
             type="text"
-            placeholder="เช่น การ์ดเซ็ต + โฟโต้บุ๊ก"
+            placeholder="เช่น การ์ดเซ็ต ครบ 5 ใบ"
             maxLength={LIMITS.title}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </label>
-        <label>
-          วันรับ <em>(ไม่ใส่ก็ได้ พิมพ์ได้อิสระ)</em>
+        <label className="field">
+          วันรับ
           <input
+            className="input"
             type="text"
-            placeholder="เช่น 15–16 พ.ย. หรือ รับหน้างาน 15 / 16 พ.ย."
+            placeholder="พิมพ์ได้เลย เช่น 15–16 พ.ย."
             maxLength={LIMITS.pickup}
             value={pickup}
             onChange={(e) => setPickup(e.target.value)}
           />
         </label>
-        <label>
-          โน้ต <em>(ไม่ใส่ก็ได้)</em>
+        <label className="field">
+          โน้ต
           <textarea
-            placeholder="เช่น ต้องรี + ฟอล + แท็กเพื่อน 2 คน"
+            className="input"
+            rows={2}
+            placeholder="เงื่อนไข เช่น รีทวีต + ฟอลโล่"
             maxLength={LIMITS.note}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
         </label>
-        <div className="row">
-          <button className="btn primary" type="submit" disabled={isSaving}>
-            {isSaving ? "กำลังบันทึก…" : submitLabel}
+        {editing ? (
+          <div className={s.row}>
+            <button className="btnPrimary" style={{ flex: 1 }} type="submit" disabled={isSaving}>
+              {isSaving ? "กำลังบันทึก…" : "บันทึกการแก้ไข"}
+            </button>
+            <button className="btnGhost" type="button" onClick={onCancel}>ยกเลิก</button>
+          </div>
+        ) : (
+          <button className="btnPrimary" type="submit" disabled={isSaving}>
+            {isSaving ? "กำลังบันทึก…" : "＋ เพิ่มลงเช็กลิสต์"}
           </button>
-          {editing && (
-            <button className="btn ghost" type="button" onClick={onCancel}>ยกเลิก</button>
-          )}
-        </div>
+        )}
       </form>
-    </section>
+    </aside>
   );
 });

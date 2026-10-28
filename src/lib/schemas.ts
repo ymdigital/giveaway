@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isValidCode, normalizeCode } from "./code";
 import { HTTP_URL_PATTERN, LIMITS } from "./limits";
-import { ACCENTS } from "./types";
+import { ACCENTS, COLOR_MODES } from "./types";
 
 export const codeSchema = z
   .string()
@@ -9,6 +9,7 @@ export const codeSchema = z
   .refine(isValidCode, { message: "invalid code" });
 
 export const accentSchema = z.enum(ACCENTS);
+export const colorModeSchema = z.enum(COLOR_MODES);
 
 const optionalText = (max: number) => z.string().trim().max(max).optional();
 
@@ -22,9 +23,17 @@ const imageField = z
   .transform((v) => (/^https:\/\/\S+$/i.test(v) ? v : ""))
   .optional();
 
-export const createListSchema = z.object({ code: codeSchema });
+export const createListSchema = z.object({
+  code: codeSchema,
+  accent: accentSchema.optional(),
+  colorMode: colorModeSchema.optional(),
+});
 
-export const updateListSchema = z.object({ accent: accentSchema });
+export const updateListSchema = z
+  .object({ accent: accentSchema.optional(), colorMode: colorModeSchema.optional() })
+  .refine((v) => v.accent !== undefined || v.colorMode !== undefined, {
+    message: "empty update",
+  });
 
 export const createItemSchema = z.object({
   url: urlField,
@@ -42,5 +51,7 @@ export const updateItemSchema = createItemSchema
 
 export const itemIdSchema = z.uuid();
 
+export type CreateListInput = z.infer<typeof createListSchema>;
+export type UpdateListInput = z.infer<typeof updateListSchema>;
 export type CreateItemInput = z.infer<typeof createItemSchema>;
 export type UpdateItemInput = z.infer<typeof updateItemSchema>;

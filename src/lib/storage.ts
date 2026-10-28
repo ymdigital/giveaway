@@ -1,4 +1,9 @@
-export const STORAGE_KEYS = { code: "gt-code", filter: "gt-filter" } as const;
+export const STORAGE_KEYS = {
+  code: "gt-code",
+  filter: "gt-filter",
+  accent: "gt-accent",
+  colorMode: "gt-mode",
+} as const;
 
 export function loadValue(key: string): string | null {
   try {

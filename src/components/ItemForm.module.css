@@ -1,3 +1,14 @@
-.panel { position: sticky; top: 16px; padding-top: 22px }
-@media (max-width: 820px) { .panel { position: static } }
+.panel {
+  flex: 0 1 380px; min-width: 0; position: sticky; top: 20px; background: var(--card);
+  border: 1.5px solid var(--line); border-radius: 24px; padding: 18px; box-shadow: 0 4px 0 var(--line);
+  display: flex; flex-direction: column; gap: 12px;
+}
+/* stacked layout: don't let the form float over the list */
+@container (max-width: 839px) { .panel { position: static; flex-basis: 100% } }
+.title { font-weight: 700; font-size: 20px }
 .form { display: flex; flex-direction: column; gap: 12px }
+.row { display: flex; gap: 8px }
+.error {
+  padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--warn) 12%, var(--card));
+  color: var(--warnDeep); font-size: 14px; font-weight: 600;
+}

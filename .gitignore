@@ -11,3 +11,6 @@ next-env.d.ts
 
 # original Apps Script source (reference only)
 example.txt
+example/
+env.local.txt
+*.env.txt

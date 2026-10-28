@@ -17,10 +17,14 @@
 
 ### 2. รัน SQL สร้างตาราง
 
-1. ในโปรเจกต์ Supabase ไปที่เมนู **SQL Editor** แล้วกด **New query**
-2. เปิดไฟล์ `supabase/migrations/001_init.sql` คัดลอกทั้งหมดไปวาง
-3. กด **Run** ควรขึ้นว่า `Success. No rows returned`
-4. ไปที่ **Table Editor** ตรวจว่ามีตาราง `lists` และ `items` แล้ว
+ใน Supabase ไปที่ **SQL Editor → New query** แล้วรันทีละไฟล์ **ตามลำดับ**
+
+| ลำดับ | ไฟล์ | ทำอะไร |
+|---|---|---|
+| 1 | `supabase/migrations/001_init.sql` | สร้างตาราง `lists`, `items` + RLS |
+| 2 | `supabase/migrations/002_color_mode_and_undo.sql` | เพิ่ม `lists.color_mode` (โหมดมืด) และ `items.deleted_at` (ปุ่มเลิกทำ) |
+
+แต่ละไฟล์ควรขึ้นว่า `Success. No rows returned` (รันซ้ำได้ ไม่พัง) แล้วไปที่ **Table Editor** ตรวจว่ามีตาราง `lists` และ `items`
 
 > ทั้งสองตารางเปิด RLS ไว้แต่ไม่มี policy เลย แปลว่า anon key อ่าน/เขียนอะไรไม่ได้ ตั้งใจให้เป็นแบบนี้ เพราะมีแค่เซิร์ฟเวอร์ที่ถือ service role key ซึ่งเข้าถึงข้อมูลได้
 
@@ -101,12 +105,13 @@ git push -u origin main
 
 | Method | Path | ทำอะไร |
 |---|---|---|
-| POST | `/api/lists` | สร้างลิสต์ `{ code }` |
 | GET | `/api/lists/[code]` | เปิดลิสต์ + รายการทั้งหมด (มี rate limit) |
-| PATCH | `/api/lists/[code]` | เปลี่ยนสีธีม `{ accent }` |
+| POST | `/api/lists` | สร้างลิสต์ `{ code, accent?, colorMode? }` |
+| PATCH | `/api/lists/[code]` | เปลี่ยนสีธีม/โหมดมืด `{ accent?, colorMode? }` |
 | POST | `/api/lists/[code]/items` | เพิ่มรายการ (สูงสุด 500 ต่อลิสต์) |
 | PATCH | `/api/lists/[code]/items/[id]` | แก้ไข/ติ๊กเก็บแล้ว |
-| DELETE | `/api/lists/[code]/items/[id]` | ลบรายการ |
+| DELETE | `/api/lists/[code]/items/[id]` | ลบรายการ (soft delete เก็บไว้ 7 วันให้กดเลิกทำได้) |
+| POST | `/api/lists/[code]/items/[id]/restore` | เลิกทำการลบ |
 | GET | `/api/preview?url=` | ดึงรูป/ผู้โพสต์/ข้อความจากลิงก์ (cache 6 ชม.) |
 
 ทุก endpoint ตอบรูปแบบ `{ ok: true, data }` หรือ `{ ok: false, error }` ยกเว้น `/api/preview` ที่ตอบ `{ ok, image, author, name, text }` และไม่โยน error

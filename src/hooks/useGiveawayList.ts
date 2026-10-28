@@ -1,10 +1,13 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, ApiError, errorMessage, type ItemDraft } from "@/lib/client-api";
+import { api, ApiError, errorMessage, type ItemDraft, type ListPrefs } from "@/lib/client-api";
 import { isValidCode, normalizeCode } from "@/lib/code";
 import { MSG } from "@/lib/messages";
 import { STORAGE_KEYS, loadValue, storeValue } from "@/lib/storage";
+import { nextColorMode } from "@/lib/theme";
 import type { Accent, Item, ListData } from "@/lib/types";
+import type { ShowToast } from "./useToast";
+import type { Theme } from "./useTheme";
 
 const NOT_FOUND = 404;
 
@@ -18,28 +21,39 @@ function setUrlCode(code: string | null) {
   }
 }
 
-export function useGiveawayList(initialCode: string | undefined, toast: (msg: string) => void) {
+export function useGiveawayList(initialCode: string | undefined, toast: ShowToast, theme: Theme) {
   const [view, setView] = useState<View>("booting");
   const [welcomeError, setWelcomeError] = useState("");
   const [code, setCode] = useState("");
-  const [accent, setAccentState] = useState<Accent>("pink");
   const [items, setItems] = useState<Item[]>([]);
   const itemsRef = useRef<Item[]>([]);
   itemsRef.current = items;
+  const { setAccent, setColorMode } = theme;
 
   const showWelcome = useCallback((msg = "") => {
     setWelcomeError(msg);
     setView("welcome");
   }, []);
 
-  const showApp = useCallback((data: ListData) => {
-    setCode(data.code);
-    setItems(data.items);
-    setAccentState(data.accent);
-    storeValue(STORAGE_KEYS.code, data.code);
-    setUrlCode(data.code);
-    setView("app");
-  }, []);
+  const applyListData = useCallback(
+    (data: ListData) => {
+      setItems(data.items);
+      setAccent(data.accent);
+      setColorMode(data.colorMode);
+    },
+    [setAccent, setColorMode],
+  );
+
+  const showApp = useCallback(
+    (data: ListData) => {
+      setCode(data.code);
+      applyListData(data);
+      storeValue(STORAGE_KEYS.code, data.code);
+      setUrlCode(data.code);
+      setView("app");
+    },
+    [applyListData],
+  );
 
   const openCode = useCallback(
     async (raw: string, isQuiet = false) => {
@@ -72,16 +86,19 @@ export function useGiveawayList(initialCode: string | undefined, toast: (msg: st
         return false;
       }
       try {
-        const data = await api.createList(next);
+        const data = await api.createList(next, {
+          accent: theme.accent,
+          colorMode: theme.colorMode,
+        });
         showApp(data);
-        toast(`สร้างลิสต์แล้ว จำรหัส ${data.code} ไว้นะคะ`);
+        toast(`สร้างลิสต์แล้ว จำรหัส ${data.code} ไว้นะคะ`, { icon: "bow" });
         return true;
       } catch (err) {
         showWelcome(errorMessage(err));
         return false;
       }
     },
-    [showApp, showWelcome, toast],
+    [showApp, showWelcome, toast, theme.accent, theme.colorMode],
   );
 
   const leave = useCallback(() => {
@@ -96,15 +113,13 @@ export function useGiveawayList(initialCode: string | undefined, toast: (msg: st
     async (showToast: boolean) => {
       if (!code) return;
       try {
-        const data = await api.openList(code);
-        setItems(data.items);
-        setAccentState(data.accent);
+        applyListData(await api.openList(code));
         if (showToast) toast("อัปเดตแล้ว");
       } catch {
         if (showToast) toast("รีเฟรชไม่สำเร็จ ลองอีกครั้งนะคะ");
       }
     },
-    [code, toast],
+    [code, toast, applyListData],
   );
 
   const replaceItem = useCallback((next: Item) => {
@@ -118,7 +133,8 @@ export function useGiveawayList(initialCode: string | undefined, toast: (msg: st
       try {
         const saved = await api.updateItem(code, item.id, { collected: optimistic.collected });
         replaceItem(saved);
-        toast(saved.collected ? "เก็บแล้ว เย้ 💗" : "ย้ายกลับไปยังไม่ได้เก็บ");
+        if (saved.collected) toast("เก็บแล้ว เย้ 💗", { icon: "check" });
+        else toast("ย้ายกลับไปยังไม่ได้เก็บ");
       } catch (err) {
         replaceItem(item);
         toast(errorMessage(err));
@@ -127,19 +143,32 @@ export function useGiveawayList(initialCode: string | undefined, toast: (msg: st
     [code, replaceItem, toast],
   );
 
+  const restore = useCallback(
+    async (id: string) => {
+      try {
+        const restored = await api.restoreItem(code, id);
+        setItems((prev) => [...prev.filter((i) => i.id !== id), restored]);
+        toast("กู้คืนรายการแล้ว", { icon: "check" });
+      } catch (err) {
+        toast(errorMessage(err));
+      }
+    },
+    [code, toast],
+  );
+
   const remove = useCallback(
     async (id: string) => {
       const backup = itemsRef.current;
       setItems((prev) => prev.filter((i) => i.id !== id));
       try {
         await api.deleteItem(code, id);
-        toast("ลบแล้ว");
+        toast("ลบรายการแล้ว", { action: { label: "เลิกทำ", onClick: () => void restore(id) } });
       } catch (err) {
         setItems(backup);
         toast(errorMessage(err));
       }
     },
-    [code, toast],
+    [code, toast, restore],
   );
 
   /** Returns true on success so the form can reset. */
@@ -148,11 +177,11 @@ export function useGiveawayList(initialCode: string | undefined, toast: (msg: st
       try {
         if (editingId) {
           replaceItem(await api.updateItem(code, editingId, draft));
-          toast("บันทึกแล้ว");
+          toast("บันทึกแล้ว", { icon: "check" });
         } else {
           const saved = await api.addItem(code, draft);
           setItems((prev) => [...prev, saved]);
-          toast("เพิ่มลงเช็กลิสต์แล้ว ✿");
+          toast("เพิ่มลงเช็กลิสต์แล้ว", { icon: "bow" });
         }
         return true;
       } catch (err) {
@@ -163,12 +192,11 @@ export function useGiveawayList(initialCode: string | undefined, toast: (msg: st
     [code, replaceItem, toast],
   );
 
-  const changeAccent = useCallback(
-    async (next: Accent) => {
-      setAccentState(next);
+  const savePrefs = useCallback(
+    async (prefs: ListPrefs) => {
       if (!code) return;
       try {
-        await api.setAccent(code, next);
+        await api.updateList(code, prefs);
       } catch (err) {
         toast(errorMessage(err));
       }
@@ -176,21 +204,31 @@ export function useGiveawayList(initialCode: string | undefined, toast: (msg: st
     [code, toast],
   );
 
+  const changeAccent = useCallback(
+    (next: Accent) => {
+      setAccent(next);
+      void savePrefs({ accent: next });
+    },
+    [setAccent, savePrefs],
+  );
+
+  const toggleDark = useCallback(() => {
+    const next = nextColorMode(theme.isDark);
+    setColorMode(next);
+    void savePrefs({ colorMode: next });
+  }, [theme.isDark, setColorMode, savePrefs]);
+
   useEffect(() => {
     const start = initialCode || loadValue(STORAGE_KEYS.code) || "";
     if (start) void openCode(start, !initialCode);
     else showWelcome();
-  }, [initialCode, openCode, showWelcome]);
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-accent", accent);
-  }, [accent]);
+    // Boot once per initial code; openCode/showWelcome are stable.
+  }, [initialCode]);
 
   return {
     view,
     welcomeError,
     code,
-    accent,
     items,
     openCode,
     createList,
@@ -200,5 +238,6 @@ export function useGiveawayList(initialCode: string | undefined, toast: (msg: st
     remove,
     save,
     changeAccent,
+    toggleDark,
   };
 }

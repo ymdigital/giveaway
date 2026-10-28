@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const { code } = parsed.data;
 
   try {
-    const created = await createList(code);
+    const created = await createList(parsed.data);
     if (!created) return fail(MSG.codeTaken, 409);
     const list = await getList(code);
     return ok(list, 201);

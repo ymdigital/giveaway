@@ -1,0 +1,16 @@
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  z-index: 20; max-width: calc(100% - 32px); display: flex; align-items: center; gap: 10px;
+  padding: 13px 20px; border-radius: 999px; background: #4A2B3B; color: #fff; font: 600 15px var(--font);
+  box-shadow: 0 10px 24px rgba(74, 43, 59, .25); animation: toast-in .2s ease-out;
+}
+.withAction { gap: 12px; padding: 9px 9px 9px 20px }
+.okDot {
+  flex: none; width: 24px; height: 24px; border-radius: 50%; background: #2E9E6B;
+  display: grid; place-items: center; font-size: 13px;
+}
+.action {
+  flex: none; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #E0702F;
+  color: #fff; font: 600 14px var(--font);
+}
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px) } }

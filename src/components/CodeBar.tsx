@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import type { ShowToast } from "@/hooks/useToast";
 import s from "./CodeBar.module.css";
 
 interface CodeBarProps {
@@ -7,7 +8,7 @@ interface CodeBarProps {
   shareUrl: string;
   onRefresh: () => void;
   onLeave: () => void;
-  toast: (msg: string) => void;
+  toast: ShowToast;
 }
 
 export function CodeBar({ code, shareUrl, onRefresh, onLeave, toast }: CodeBarProps) {
@@ -27,28 +28,26 @@ export function CodeBar({ code, shareUrl, onRefresh, onLeave, toast }: CodeBarPr
     if (!navigator.clipboard?.writeText) return showFallback();
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast("คัดลอกลิงก์แล้ว เปิดในอีกเครื่องได้เลย");
+      toast("คัดลอกลิงก์ลิสต์แล้ว", { icon: "copy" });
     } catch {
       showFallback();
     }
   }
 
   return (
-    <section className={`panel ${s.bar}`}>
-      <div className={s.row}>
-        <div className={s.codebox}>
-          <small>รหัสลิสต์ของคุณ (จดเก็บไว้ ถ้าหายจะกู้ไม่ได้)</small>
-          <span className={s.code}>{code}</span>
-        </div>
-        <div className={s.actions}>
-          <button className="mini" type="button" onClick={copy}>คัดลอกลิงก์ลิสต์นี้</button>
-          <button className="mini" type="button" onClick={onRefresh}>↻ รีเฟรช</button>
-          <button className="mini" type="button" onClick={onLeave}>เปลี่ยนลิสต์</button>
-        </div>
+    <div className={s.bar}>
+      <div className={s.codebox}>
+        <div className={s.label}>🎀 รหัสลิสต์</div>
+        <div className={s.code}>{code}</div>
+      </div>
+      <div className={s.actions}>
+        <button type="button" className={s.soft} onClick={copy}>⧉ คัดลอกลิงก์</button>
+        <button type="button" className={s.soft} onClick={onRefresh}>↻ รีเฟรช</button>
+        <button type="button" className={s.outline} onClick={onLeave}>⇄ เปลี่ยนลิสต์</button>
       </div>
       {isLinkShown && (
-        <input ref={linkRef} className={s.sharelink} value={shareUrl} readOnly aria-label="ลิงก์ลิสต์" />
+        <input ref={linkRef} className={`input ${s.sharelink}`} value={shareUrl} readOnly aria-label="ลิงก์ลิสต์" />
       )}
-    </section>
+    </div>
   );
 }

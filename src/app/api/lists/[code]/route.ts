@@ -1,7 +1,7 @@
 import { clientIp, fail, ok, readJson, serverError } from "@/lib/http";
 import { MSG } from "@/lib/messages";
 import { openListLimiter } from "@/lib/limiters";
-import { getList, setAccent } from "@/lib/repo";
+import { getList, updateList } from "@/lib/repo";
 import { codeSchema, updateListSchema } from "@/lib/schemas";
 
 type Ctx = { params: Promise<{ code: string }> };
@@ -27,9 +27,9 @@ export async function PATCH(req: Request, ctx: Ctx) {
   if (!body.success) return fail(MSG.badInput, 400);
 
   try {
-    const found = await setAccent(code.data, body.data.accent);
-    return found ? ok({ accent: body.data.accent }) : fail(MSG.codeNotFound, 404);
+    const found = await updateList(code.data, body.data);
+    return found ? ok(body.data) : fail(MSG.codeNotFound, 404);
   } catch (err) {
-    return serverError("set accent", err);
+    return serverError("update list", err, { list_code: code.data });
   }
 }

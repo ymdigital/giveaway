@@ -4,12 +4,14 @@ import { countItems, isFilter, type Filter } from "@/lib/items";
 import { STORAGE_KEYS, loadValue, storeValue } from "@/lib/storage";
 import type { Item } from "@/lib/types";
 import { useGiveawayList } from "@/hooks/useGiveawayList";
+import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/hooks/useToast";
 import { CodeBar } from "./CodeBar";
-import { Header } from "./Header";
 import { ItemForm } from "./ItemForm";
 import { ItemList } from "./ItemList";
 import { Stats } from "./Stats";
+import { ThemeControls } from "./ThemeControls";
+import { Toast } from "./Toast";
 import { Welcome } from "./Welcome";
 import s from "./GiveawayApp.module.css";
 
@@ -24,7 +26,8 @@ function buildShareUrl(code: string): string {
 
 export function GiveawayApp({ initialCode }: GiveawayAppProps) {
   const toast = useToast();
-  const list = useGiveawayList(initialCode, toast.show);
+  const theme = useTheme();
+  const list = useGiveawayList(initialCode, toast.show, theme);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Item | null>(null);
@@ -66,6 +69,7 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
 
   const handleLeave = useCallback(() => {
     resetForm();
+    setQuery("");
     leave();
   }, [leave, resetForm]);
 
@@ -74,31 +78,57 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
     storeValue(STORAGE_KEYS.filter, f);
   }, []);
 
+  const themeControls = (
+    <ThemeControls
+      accent={theme.accent}
+      isDark={theme.isDark}
+      onAccent={list.changeAccent}
+      onToggleDark={list.toggleDark}
+    />
+  );
   const stats = countItems(list.items);
 
   return (
     <>
-      <div className="wrap">
-        <Header accent={list.accent} showSwatches={list.view === "app"} onAccent={list.changeAccent} />
+      {list.view === "booting" && (
+        <div className={s.booting}>
+          <div className="emptyBox">
+            <div className="emptyIcon">🎀</div>
+            <div className="emptyTitle">กำลังโหลด…</div>
+            <div className="emptyText">รอสักครู่นะคะ</div>
+          </div>
+        </div>
+      )}
 
-        {list.view === "booting" && (
-          <p className="empty"><b>กำลังโหลด…</b>รอสักครู่นะคะ</p>
-        )}
+      {list.view === "welcome" && (
+        <Welcome
+          error={list.welcomeError}
+          accent={theme.accent}
+          isDark={theme.isDark}
+          onAccent={list.changeAccent}
+          onToggleDark={list.toggleDark}
+          onOpen={list.openCode}
+          onCreate={list.createList}
+        />
+      )}
 
-        {list.view === "welcome" && (
-          <Welcome error={list.welcomeError} onOpen={list.openCode} onCreate={list.createList} />
-        )}
-
-        {list.view === "app" && (
-          <div className={s.app}>
-            <CodeBar
-              code={code}
-              shareUrl={buildShareUrl(code)}
-              onRefresh={() => void refresh(true)}
-              onLeave={handleLeave}
-              toast={toast.show}
-            />
-            <Stats all={stats.all} todo={stats.todo} done={stats.done} />
+      {list.view === "app" && (
+        <div className={s.screen}>
+          <div className={s.wrap}>
+            <header className={s.header}>
+              <h1 className={s.brand}>Giveaway Tracker 🎀</h1>
+              {themeControls}
+            </header>
+            <div className={s.summary}>
+              <CodeBar
+                code={code}
+                shareUrl={buildShareUrl(code)}
+                onRefresh={() => void refresh(true)}
+                onLeave={handleLeave}
+                toast={toast.show}
+              />
+              <Stats all={stats.all} todo={stats.todo} done={stats.done} />
+            </div>
             <div className={s.main}>
               <ItemForm
                 key={`${editing?.id ?? "new"}-${formNonce}`}
@@ -112,6 +142,7 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
                 items={list.items}
                 filter={filter}
                 query={query}
+                editingId={editing?.id ?? null}
                 onFilter={changeFilter}
                 onQuery={setQuery}
                 onToggle={list.toggle}
@@ -120,11 +151,10 @@ export function GiveawayApp({ initialCode }: GiveawayAppProps) {
               />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <footer>ทำด้วยความรักสำหรับนักเก็บ Giveaway 💕</footer>
-      </div>
-      {toast.message && <div className="toast" role="status">{toast.message}</div>}
+      <Toast toast={toast.toast} onDismiss={toast.dismiss} />
     </>
   );
 }
