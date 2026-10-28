@@ -1,7 +1,18 @@
-.picker {
-  display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 14px;
-  border: 1.5px solid var(--line); background: var(--bg); font-weight: 400;
+.root { position: relative; display: flex; flex-direction: column; gap: 8px; font-weight: 400 }
+.trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; cursor: pointer }
+.trigger[aria-expanded="true"] { border-color: var(--p) }
+.placeholder { color: var(--mute) }
+.caret { color: var(--mute); font-size: 12px }
+.popover {
+  position: absolute; z-index: 20; top: 54px; left: 0; right: 0; display: flex; flex-direction: column; gap: 8px;
+  padding: 10px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--card);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--ink) 18%, transparent), 0 3px 0 var(--line);
 }
+.done {
+  align-self: flex-end; min-height: 36px; padding: 0 16px; border-radius: 999px; border: 0;
+  background: var(--p); color: #fff; font: 600 14px var(--font);
+}
+.picker { display: flex; flex-direction: column; gap: 8px }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 8px }
 .month { font-weight: 600; font-size: 14px }
 .nav {

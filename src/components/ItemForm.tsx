@@ -119,9 +119,9 @@ export const ItemForm = forwardRef<HTMLElement, ItemFormProps>(function ItemForm
             onChange={(e) => setTitle(e.target.value)}
           />
         </label>
-        <div className="field" role="group" aria-labelledby="fPickupLabel">
+        <div className="field">
           <span id="fPickupLabel">วันรับ {pickupDates.length > 0 && `(${pickupDates.length} วัน)`}</span>
-          <PickupPicker value={pickupDates} onChange={setPickupDates} />
+          <PickupPicker value={pickupDates} onChange={setPickupDates} labelId="fPickupLabel" />
         </div>
         <label className="field">
           รายละเอียดการรับ

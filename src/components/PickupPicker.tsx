@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type RefObject } from "react";
 import { LIMITS } from "@/lib/limits";
 import { formatPickupDate, monthGrid, shiftMonth, toggleSelectedDate, toIsoDate, type MonthRef } from "@/lib/pickup";
 import type { PickupDate } from "@/lib/types";
@@ -11,6 +11,7 @@ const MONTH_TITLE = new Intl.DateTimeFormat("th-TH", { month: "long", year: "num
 interface PickupPickerProps {
   value: PickupDate[];
   onChange: (next: PickupDate[]) => void;
+  labelId?: string;
 }
 
 function startMonth(value: readonly PickupDate[]): MonthRef {
@@ -23,7 +24,79 @@ function startMonth(value: readonly PickupDate[]): MonthRef {
   return { year: now.getFullYear(), month: now.getMonth() };
 }
 
-export function PickupPicker({ value, onChange }: PickupPickerProps) {
+function triggerText(value: readonly PickupDate[]): string {
+  if (value.length === 0) return "เลือกวันรับ (เลือกได้หลายวัน)";
+  if (value.length === 1) return formatPickupDate(value[0].date);
+  return `${formatPickupDate(value[0].date)} และอีก ${value.length - 1} วัน`;
+}
+
+/** Closes the popover on a click outside `ref` or on Escape. */
+function useDismiss(ref: RefObject<HTMLElement | null>, isOpen: boolean, close: () => void) {
+  useEffect(() => {
+    if (!isOpen) return;
+    function onPointer(e: PointerEvent) {
+      if (!ref.current?.contains(e.target as Node)) close();
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [ref, isOpen, close]);
+}
+
+export function PickupPicker({ value, onChange, labelId }: PickupPickerProps) {
+  const [isOpen, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const popoverId = useId();
+  const valueId = useId();
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(rootRef, isOpen, close);
+
+  return (
+    <div ref={rootRef} className={s.root}>
+      <button
+        type="button"
+        className={`input ${s.trigger}`}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={popoverId}
+        aria-labelledby={labelId ? `${labelId} ${valueId}` : valueId}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span id={valueId} className={value.length ? undefined : s.placeholder}>📅 {triggerText(value)}</span>
+        <span className={s.caret} aria-hidden="true">{isOpen ? "▴" : "▾"}</span>
+      </button>
+      {isOpen && (
+        <div id={popoverId} className={s.popover} role="dialog" aria-label="เลือกวันรับ">
+          <Calendar value={value} onChange={onChange} />
+          <button type="button" className={s.done} onClick={close}>เสร็จ</button>
+        </div>
+      )}
+      {value.length > 0 && (
+        <div className={s.chips}>
+          {value.map((d) => (
+            <button
+              key={d.date}
+              type="button"
+              className={s.chip}
+              aria-label={`เอา ${formatPickupDate(d.date)} ออก`}
+              onClick={() => onChange(toggleSelectedDate(value, d.date))}
+            >
+              {formatPickupDate(d.date)} <span aria-hidden="true">×</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Calendar({ value, onChange }: Pick<PickupPickerProps, "value" | "onChange">) {
   const [shown, setShown] = useState<MonthRef>(() => startMonth(value));
   const today = toIsoDate(new Date());
   const selected = new Set(value.map((d) => d.date));
@@ -61,23 +134,7 @@ export function PickupPicker({ value, onChange }: PickupPickerProps) {
           );
         })}
       </div>
-      {value.length > 0 ? (
-        <div className={s.chips}>
-          {value.map((d) => (
-            <button
-              key={d.date}
-              type="button"
-              className={s.chip}
-              aria-label={`เอา ${formatPickupDate(d.date)} ออก`}
-              onClick={() => onChange(toggleSelectedDate(value, d.date))}
-            >
-              {formatPickupDate(d.date)} <span aria-hidden="true">×</span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className={s.hint}>แตะวันที่ในปฏิทินได้หลายวัน</div>
-      )}
+      <div className={s.hint}>แตะได้หลายวัน แตะซ้ำเพื่อเอาออก</div>
       {isFull && <div className={s.hint}>เลือกได้สูงสุด {LIMITS.pickupDates} วัน</div>}
     </div>
   );
