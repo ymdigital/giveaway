@@ -2,10 +2,12 @@
 import { forwardRef, useState, type FormEvent } from "react";
 import type { ItemDraft } from "@/lib/client-api";
 import { titleFromText } from "@/lib/items";
+import { isAllCollected } from "@/lib/pickup";
 import { HTTP_URL_PATTERN, LIMITS } from "@/lib/limits";
 import { MSG } from "@/lib/messages";
-import type { Item } from "@/lib/types";
+import type { Item, PickupDate } from "@/lib/types";
 import { usePreview, type PreviewState } from "@/hooks/usePreview";
+import { PickupPicker } from "./PickupPicker";
 import { PreviewCard } from "./PreviewCard";
 import s from "./ItemForm.module.css";
 
@@ -32,6 +34,7 @@ export const ItemForm = forwardRef<HTMLElement, ItemFormProps>(function ItemForm
   const [url, setUrl] = useState(editing?.url ?? "");
   const [title, setTitle] = useState(editing?.title ?? "");
   const [pickup, setPickup] = useState(editing?.pickup ?? "");
+  const [pickupDates, setPickupDates] = useState<PickupDate[]>(editing?.pickupDates ?? []);
   const [note, setNote] = useState(editing?.note ?? "");
   const [isUrlInvalid, setUrlInvalid] = useState(false);
   const [isSaving, setSaving] = useState(false);
@@ -40,7 +43,15 @@ export const ItemForm = forwardRef<HTMLElement, ItemFormProps>(function ItemForm
   );
 
   function buildDraft(cleanUrl: string): ItemDraft {
-    const base = { url: cleanUrl, title: title.trim(), pickup: pickup.trim(), note: note.trim() };
+    const base = {
+      url: cleanUrl,
+      title: title.trim(),
+      pickup: pickup.trim(),
+      pickupDates,
+      note: note.trim(),
+      // Changing an item's dates re-derives collected, e.g. adding a date reopens it.
+      ...(editing && pickupDates.length > 0 ? { collected: isAllCollected(pickupDates) } : {}),
+    };
     const pv = preview.state;
     if (pv.status === "ready" && pv.url === cleanUrl) {
       return { ...base, image: pv.data.image, author: pv.data.author };
@@ -108,12 +119,16 @@ export const ItemForm = forwardRef<HTMLElement, ItemFormProps>(function ItemForm
             onChange={(e) => setTitle(e.target.value)}
           />
         </label>
+        <div className="field" role="group" aria-labelledby="fPickupLabel">
+          <span id="fPickupLabel">วันรับ {pickupDates.length > 0 && `(${pickupDates.length} วัน)`}</span>
+          <PickupPicker value={pickupDates} onChange={setPickupDates} />
+        </div>
         <label className="field">
-          วันรับ
+          รายละเอียดการรับ
           <input
             className="input"
             type="text"
-            placeholder="พิมพ์ได้เลย เช่น 15–16 พ.ย."
+            placeholder="เช่น 13:00 หน้างาน / ส่งไปรษณีย์"
             maxLength={LIMITS.pickup}
             value={pickup}
             onChange={(e) => setPickup(e.target.value)}

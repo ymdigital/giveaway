@@ -51,6 +51,26 @@
   font: 600 13px var(--font); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warnDeep) 22%, transparent);
 }
 
+.dates {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 14px;
+  background: color-mix(in srgb, var(--p) 7%, var(--card)); border: 1px dashed var(--line);
+}
+.datesHead { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600 }
+.progress { color: var(--ok); white-space: nowrap }
+.dateList { display: flex; flex-wrap: wrap; gap: 6px }
+.dateBtn {
+  min-height: 36px; padding: 0 12px 0 6px; border-radius: 999px; border: 1.5px solid var(--line);
+  background: var(--card); color: var(--ink); font: 500 13px var(--font); display: inline-flex; align-items: center; gap: 6px;
+}
+.box {
+  width: 20px; height: 20px; border-radius: 6px; border: 2px solid color-mix(in srgb, var(--p) 50%, var(--line));
+  display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff;
+}
+.dateOn { color: var(--mute); text-decoration: line-through; border-color: color-mix(in srgb, var(--ok) 40%, var(--line)) }
+.dateOn .box { background: var(--ok); border-color: var(--ok) }
+.dateToday { border-color: var(--p) }
+.todayTag { font-size: 11px; font-weight: 700; color: var(--p) }
+
 /* List view: one compact row per item. */
 .row { flex-direction: row; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 16px; box-shadow: 0 2px 0 var(--line) }
 .row .main { align-items: center; min-width: 0 }
@@ -63,8 +83,9 @@
 .row .title { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .row .note { display: none }
 .row .actions { flex: none; border-top: 0; padding-top: 0; flex-direction: column; gap: 4px }
+.row { flex-wrap: wrap }
+.row .dates { order: 3; flex: 1 1 100%; padding: 8px 10px }
 @media (max-width: 480px) {
-  .row { flex-wrap: wrap }
   .row .main { flex: 1 1 100% }
   .row .actions { flex-direction: row; width: 100%; border-top: 1px dashed var(--line); padding-top: 8px }
 }

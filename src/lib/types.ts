@@ -4,11 +4,14 @@ export type Accent = (typeof ACCENTS)[number];
 export const COLOR_MODES = ["system", "light", "dark"] as const;
 export type ColorMode = (typeof COLOR_MODES)[number];
 
+export type PickupDate = { date: string; collected: boolean };
+
 export type Item = {
   id: string;
   url: string;
   title: string;
   pickup: string;
+  pickupDates: PickupDate[];
   note: string;
   image: string;
   author: string;

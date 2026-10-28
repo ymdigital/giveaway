@@ -23,6 +23,7 @@ const FILTER_LABELS: Record<Filter, string> = {
 
 const SORT_LABELS: Record<SortOrder, string> = {
   status: "ยังไม่ได้เก็บก่อน",
+  pickup: "วันรับใกล้สุดก่อน",
   newest: "ใหม่สุดก่อน",
   oldest: "เก่าสุดก่อน",
   title: "ชื่อ ก–ฮ",
@@ -45,6 +46,7 @@ interface ItemListProps {
   onOrder: (order: SortOrder) => void;
   onViewMode: (viewMode: ViewMode) => void;
   onToggle: (item: Item) => void;
+  onToggleDate: (item: Item, date: string) => void;
   onEdit: (item: Item) => void;
   onDelete: (id: string) => void;
 }
@@ -160,6 +162,7 @@ export function ItemList(props: ItemListProps) {
               isArmed={armedId === item.id}
               isEditing={editingId === item.id}
               onToggle={onToggle}
+              onToggleDate={props.onToggleDate}
               onEdit={onEdit}
               onDelete={press}
             />

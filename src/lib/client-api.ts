@@ -1,5 +1,5 @@
 import { MSG } from "./messages";
-import type { Accent, ApiResult, ColorMode, Item, ListData, Preview } from "./types";
+import type { Accent, ApiResult, ColorMode, Item, ListData, PickupDate, Preview } from "./types";
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
@@ -32,9 +32,11 @@ export type ItemDraft = {
   url: string;
   title: string;
   pickup: string;
+  pickupDates: PickupDate[];
   note: string;
   image?: string;
   author?: string;
+  collected?: boolean;
 };
 
 export type ListPrefs = { accent?: Accent; colorMode?: ColorMode };

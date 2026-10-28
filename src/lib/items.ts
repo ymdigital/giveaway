@@ -1,3 +1,4 @@
+import { formatPickupDate, nextPickupDate } from "./pickup";
 import type { Item } from "./types";
 
 export type Filter = "all" | "todo" | "done";
@@ -12,8 +13,8 @@ export function countItems(items: readonly Item[]) {
   return { all: items.length, done, todo: items.length - done };
 }
 
-export type SortOrder = "status" | "newest" | "oldest" | "title";
-export const SORT_ORDERS: readonly SortOrder[] = ["status", "newest", "oldest", "title"];
+export type SortOrder = "status" | "pickup" | "newest" | "oldest" | "title";
+export const SORT_ORDERS: readonly SortOrder[] = ["status", "pickup", "newest", "oldest", "title"];
 
 export function isSortOrder(v: unknown): v is SortOrder {
   return typeof v === "string" && (SORT_ORDERS as readonly string[]).includes(v);
@@ -33,8 +34,19 @@ export function displayName(item: Item): string {
 
 const byNewest = (a: Item, b: Item) => Date.parse(b.createdAt) - Date.parse(a.createdAt);
 
+/** Nearest uncollected pickup date first; items with nothing left to pick up go last. */
+function byNextPickup(a: Item, b: Item): number {
+  const na = nextPickupDate(a.pickupDates);
+  const nb = nextPickupDate(b.pickupDates);
+  if (na === nb) return byNewest(a, b);
+  if (na === null) return 1;
+  if (nb === null) return -1;
+  return na.localeCompare(nb);
+}
+
 const COMPARATORS: Record<SortOrder, (a: Item, b: Item) => number> = {
   status: (a, b) => (a.collected === b.collected ? byNewest(a, b) : a.collected ? 1 : -1),
+  pickup: byNextPickup,
   newest: byNewest,
   oldest: (a, b) => byNewest(b, a),
   title: (a, b) => displayName(a).localeCompare(displayName(b), "th") || byNewest(a, b),
@@ -57,7 +69,10 @@ export function visibleItems(
     .filter(
       (i) =>
         !q ||
-        [i.title, i.url, i.note, i.pickup, i.author].join(" ").toLowerCase().includes(q),
+        [i.title, i.url, i.note, i.pickup, i.author, ...i.pickupDates.map((d) => formatPickupDate(d.date))]
+          .join(" ")
+          .toLowerCase()
+          .includes(q),
     );
   return sortItems(filtered, order);
 }

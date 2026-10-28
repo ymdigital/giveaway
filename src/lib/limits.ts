@@ -2,6 +2,7 @@ export const LIMITS = {
   url: 2000,
   title: 120,
   pickup: 80,
+  pickupDates: 14,
   note: 500,
   image: 2000,
   author: 100,

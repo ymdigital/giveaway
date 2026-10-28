@@ -1,10 +1,16 @@
 import "server-only";
 import { getSupabase } from "./supabase-server";
-import type { CreateItemInput, CreateListInput, UpdateItemInput, UpdateListInput } from "./schemas";
+import {
+  pickupDatesSchema,
+  type CreateItemInput,
+  type CreateListInput,
+  type UpdateItemInput,
+  type UpdateListInput,
+} from "./schemas";
 import type { Accent, ColorMode, Item, ListData } from "./types";
 
 const ITEM_COLUMNS =
-  "id,url,title,pickup,note,image,author,collected,created_at,updated_at";
+  "id,url,title,pickup,pickup_dates,note,image,author,collected,created_at,updated_at";
 const UNIQUE_VIOLATION = "23505";
 // Soft-deleted items stay restorable (undo) for this long, then are purged.
 const PURGE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
@@ -14,6 +20,7 @@ type ItemRow = {
   url: string;
   title: string | null;
   pickup: string | null;
+  pickup_dates: unknown;
   note: string | null;
   image: string | null;
   author: string | null;
@@ -30,12 +37,21 @@ export class RepoError extends Error {
   }
 }
 
+// Stored JSON is re-validated; a malformed value reads as no dates rather than breaking the list.
+function toPickupDates(row: ItemRow): Item["pickupDates"] {
+  const parsed = pickupDatesSchema.safeParse(row.pickup_dates);
+  if (parsed.success) return parsed.data;
+  console.warn(JSON.stringify({ level: "warn", msg: "ignore malformed pickup_dates", item_id: row.id }));
+  return [];
+}
+
 function toItem(row: ItemRow): Item {
   return {
     id: row.id,
     url: row.url,
     title: row.title ?? "",
     pickup: row.pickup ?? "",
+    pickupDates: toPickupDates(row),
     note: row.note ?? "",
     image: row.image ?? "",
     author: row.author ?? "",
@@ -45,12 +61,14 @@ function toItem(row: ItemRow): Item {
   };
 }
 
+const COLUMN_NAMES: Partial<Record<keyof UpdateItemInput, string>> = { pickupDates: "pickup_dates" };
+
 // Empty strings are stored as NULL; undefined keys are left untouched.
-function toColumns(input: UpdateItemInput): Record<string, string | boolean | null> {
+function toColumns(input: UpdateItemInput): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(input)
       .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => [k, v === "" ? null : (v as string | boolean)]),
+      .map(([k, v]) => [COLUMN_NAMES[k as keyof UpdateItemInput] ?? k, v === "" ? null : v]),
   );
 }
 

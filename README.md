@@ -23,6 +23,7 @@
 |---|---|---|
 | 1 | `supabase/migrations/001_init.sql` | สร้างตาราง `lists`, `items` + RLS |
 | 2 | `supabase/migrations/002_color_mode_and_undo.sql` | เพิ่ม `lists.color_mode` (โหมดมืด) และ `items.deleted_at` (ปุ่มเลิกทำ) |
+| 3 | `supabase/migrations/003_pickup_dates.sql` | เพิ่ม `items.pickup_dates` (วันรับหลายวัน เช็กแยกแต่ละวัน) |
 
 แต่ละไฟล์ควรขึ้นว่า `Success. No rows returned` (รันซ้ำได้ ไม่พัง) แล้วไปที่ **Table Editor** ตรวจว่ามีตาราง `lists` และ `items`
 

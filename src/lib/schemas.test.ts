@@ -37,6 +37,36 @@ describe("updateItemSchema", () => {
   });
 });
 
+describe("pickupDates", () => {
+  const base = { url: "https://x.com/a/status/1" };
+  test("normalizes order and duplicates", () => {
+    const parsed = createItemSchema.parse({
+      ...base,
+      pickupDates: [
+        { date: "2026-11-16", collected: false },
+        { date: "2026-11-15", collected: true },
+        { date: "2026-11-16", collected: true },
+      ],
+    });
+    expect(parsed.pickupDates).toEqual([
+      { date: "2026-11-15", collected: true },
+      { date: "2026-11-16", collected: true },
+    ]);
+  });
+  test("rejects malformed or impossible dates", () => {
+    expect(createItemSchema.safeParse({ ...base, pickupDates: [{ date: "15/11/2026", collected: false }] }).success).toBe(false);
+    expect(createItemSchema.safeParse({ ...base, pickupDates: [{ date: "2026-02-30", collected: false }] }).success).toBe(false);
+    expect(createItemSchema.safeParse({ ...base, pickupDates: [{ date: "2026-11-15" }] }).success).toBe(false);
+  });
+  test("caps the number of dates", () => {
+    const many = Array.from({ length: 15 }, (_, i) => ({ date: `2026-11-${String(i + 1).padStart(2, "0")}`, collected: false }));
+    expect(createItemSchema.safeParse({ ...base, pickupDates: many }).success).toBe(false);
+  });
+  test("update accepts a pickupDates-only patch", () => {
+    expect(updateItemSchema.safeParse({ pickupDates: [], collected: false }).success).toBe(true);
+  });
+});
+
 describe("list schemas", () => {
   test("create accepts optional theme prefs", () => {
     expect(createListSchema.parse({ code: "my-list-01", accent: "mint", colorMode: "dark" })).toEqual({
